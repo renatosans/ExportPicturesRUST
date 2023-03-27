@@ -157,8 +157,8 @@ impl Demo {
             fornecedor: None,
             descricao: Some("Bola de futebol americano".to_string()),
             foto: None,
-            formatoImagem: None,
-            dataCriacao: Some(chrono::Local::now().naive_local()),
+            formato_imagem: None,
+            data_criacao: Some(chrono::Local::now().naive_local()),
         };
 
         diesel::insert_into(produto).values(new_product).execute(&mut conn).unwrap_or_else(|e| {

@@ -34,8 +34,10 @@ pub struct Produto {
     pub fornecedor: Option<i32>,
     pub descricao: Option<String>,
     pub foto: Option<String>,
-    pub formatoImagem: Option<String>,
-    pub dataCriacao: Option<NaiveDateTime>,
+    #[diesel(column_name = formatoImagem)]
+    pub formato_imagem: Option<String>,
+    #[diesel(column_name = dataCriacao)]
+    pub data_criacao: Option<NaiveDateTime>,
 }
 
 #[derive(Queryable, Debug)]
