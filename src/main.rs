@@ -1,5 +1,7 @@
 use std::fs::File;
-use std::io::{Read, Cursor};
+use std::path::Path;
+use std::ffi::OsStr;
+use std::io::Read;
 use base64::encode;
 use tinyfiledialogs::*;
 
@@ -161,17 +163,20 @@ impl Demo {
             }
             None => return,
         }
-        let foto: String = file_to_base64(file_path);
+        let foto: String = file_to_base64(file_path.clone());
+        let path = Path::new(&file_path);
+        let filename = path.file_stem().and_then(OsStr::to_str).unwrap();
+        let extension = path.extension().and_then(OsStr::to_str).unwrap();
 
         let new_product = Produto {
             id: 0,
-            nome: "Saco de areia".to_string(),
+            nome: filename.to_string(),
             preco: 99.00,
             categoria: None,
             fornecedor: None,
-            descricao: Some("Saco de areia".to_string()),
+            descricao: Some("Descrição do produto".to_string()),
             foto: Some(foto),
-            formato_imagem: None,
+            formato_imagem: Some(format!("image/{};base64", extension)),
             data_criacao: Some(chrono::Local::now().naive_local()),
         };
 
