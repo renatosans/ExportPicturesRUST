@@ -25,7 +25,7 @@ pub struct Fornecedor {
 }
 
 #[derive(Queryable, Insertable, Serialize, Deserialize, Debug)]
-#[table_name = "produto"]
+#[diesel(table_name = produto)]
 pub struct Produto {
     pub id: i32,
     pub nome: String,

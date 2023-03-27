@@ -161,7 +161,10 @@ impl Demo {
             dataCriacao: Some(chrono::Local::now().naive_local()),
         };
 
-        diesel::insert_into(produto).values(new_product).execute(&mut conn);
+        diesel::insert_into(produto).values(new_product).execute(&mut conn).unwrap_or_else(|e| {
+            println!("Error: {}", e);
+            std::process::exit(0); // don´t panic
+        });
     }
 
     fn retrieve_products(&mut self) {
