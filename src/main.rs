@@ -1,3 +1,8 @@
+use std::fs::File;
+use std::io::{Read, Cursor};
+use base64::encode;
+use tinyfiledialogs::*;
+
 use dotenv::dotenv;
 use diesel::prelude::*;
 use diesel::r2d2::{self, ConnectionManager};
@@ -6,7 +11,6 @@ use eframe::egui;
 use egui::style::Margin;
 use egui_toast::{Toast, ToastKind, ToastOptions, Toasts};
 use egui::{Color32, Direction, Frame, Pos2, RichText, Widget};
-use tinyfiledialogs::*;
 
 mod models;
 mod schema;
@@ -150,23 +154,23 @@ impl Demo {
     fn insert_product(&mut self) {
         let mut conn = self.pool.get().unwrap(); // TODO: fix unwrap
 
-        let filename: String;
+        let file_path: String;
         match open_file_dialog("Selecione a foto do produto", "*.*", None) {
             Some(file) => {
-                filename = file;
+                file_path = file;
             }
             None => return,
         }
-        println!("Filename: {}", filename);
+        let foto: String = file_to_base64(file_path);
 
         let new_product = Produto {
             id: 0,
-            nome: "Basketball".to_string(),
+            nome: "Saco de areia".to_string(),
             preco: 99.00,
             categoria: None,
             fornecedor: None,
-            descricao: Some("Bola de basquete".to_string()),
-            foto: None,
+            descricao: Some("Saco de areia".to_string()),
+            foto: Some(foto),
             formato_imagem: None,
             data_criacao: Some(chrono::Local::now().naive_local()),
         };
@@ -183,6 +187,14 @@ impl Demo {
         let result: Result<Vec<Produto>, diesel::result::Error> = produto.load::<Produto>(&mut conn);
         println!("The result is {:#?}", result);
     }
+}
+
+fn file_to_base64(file_path: String) -> String {
+    let mut file = File::open(file_path).expect("Failed to open file");
+    let mut file_data: Vec<u8> = Vec::new();
+    file.read_to_end(&mut file_data).expect("Failed to read file data");
+    let res_base64 = encode(&file_data);
+    res_base64
 }
 
 fn my_custom_toast_contents(ui: &mut egui::Ui, toast: &mut Toast) -> egui::Response {
