@@ -12,3 +12,4 @@ dotenv = "0.15.0"
 eframe = "0.21.3"
 egui-toast = "0.6.0"
 serde = { version = "1.0.158", features = ["derive"] }
+tinyfiledialogs = "3.9.1"
