@@ -2,8 +2,8 @@ use std::fs::File;
 use std::path::Path;
 use std::ffi::OsStr;
 use std::io::Read;
-use base64::encode;
 use tinyfiledialogs::*;
+use base64::{Engine as _, engine::general_purpose};
 
 use dotenv::dotenv;
 use diesel::prelude::*;
@@ -28,7 +28,7 @@ pub type DbPool = r2d2::Pool<ConnectionManager<MysqlConnection>>;
 
 fn main() {
     eframe::run_native(
-        "Catalogo de produtos",
+        "Export Pictures (Catalogo de produtos)",
         eframe::NativeOptions::default(),
         Box::new(|_cc| Box::new(Demo::default())),
     ).unwrap();
@@ -198,8 +198,8 @@ fn file_to_base64(file_path: String) -> String {
     let mut file = File::open(file_path).expect("Failed to open file");
     let mut file_data: Vec<u8> = Vec::new();
     file.read_to_end(&mut file_data).expect("Failed to read file data");
-    let res_base64 = encode(&file_data);
-    res_base64
+    let encoded: String = general_purpose::STANDARD_NO_PAD.encode(file_data);
+    encoded
 }
 
 fn my_custom_toast_contents(ui: &mut egui::Ui, toast: &mut Toast) -> egui::Response {

@@ -1,5 +1,5 @@
 [package]
-name = "catalogo_rust"
+name = "export_pictures"
 version = "0.1.0"
 edition = "2021"
 
