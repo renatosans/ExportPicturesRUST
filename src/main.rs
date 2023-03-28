@@ -43,6 +43,7 @@ struct Demo {
     kind: ToastKind,
     show_icon: bool,
     pool: DbPool,
+    toasts: Toasts,
 }
 
 impl Default for Demo {
@@ -65,7 +66,8 @@ impl Default for Demo {
             align_to_end: false,
             kind: ToastKind::Info,
             show_icon: true,
-            pool: pool
+            pool: pool,
+            toasts: Toasts::new(),
         }
     }
 }
@@ -92,23 +94,6 @@ impl Demo {
             .default_pos((100.0, 100.0))
             .default_width(200.0)
             .show(ctx, |ui| {
-
-                egui::ComboBox::from_label("Direction")
-                    .selected_text(format!("{:?}", self.direction))
-                    .show_ui(ui, |ui| {
-                        ui.selectable_value(&mut self.direction, Direction::TopDown, "TopDown");
-                        ui.selectable_value(&mut self.direction, Direction::BottomUp, "BottomUp");
-                        ui.selectable_value(
-                            &mut self.direction,
-                            Direction::RightToLeft,
-                            "RightToLeft",
-                        );
-                        ui.selectable_value(
-                            &mut self.direction,
-                            Direction::LeftToRight,
-                            "LeftToRight",
-                        );
-                    });
 
                 egui::ComboBox::from_label("Kind")
                     .selected_text(format!("{:?}", self.kind))
@@ -184,6 +169,8 @@ impl Demo {
             println!("Error: {}", e);
             std::process::exit(0); // don´t panic
         });
+
+        // self.toasts.info("Registro inserido com sucesso no banco", options);
     }
 
     fn retrieve_products(&mut self) {
