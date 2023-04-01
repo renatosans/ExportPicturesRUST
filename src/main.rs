@@ -55,6 +55,11 @@ impl Default for Demo {
             println!("Error: {}", e);
             std::process::exit(0); // don´t panic
         });
+        let toasts: Toasts = Toasts::new()
+        .anchor(Pos2::new(50.0, 50.0))
+        .direction(Direction::TopDown)
+        .align_to_end(false)
+        .custom_contents(MY_CUSTOM_TOAST, my_custom_toast_contents);
 
         Self {
             i: 0,
@@ -62,11 +67,7 @@ impl Default for Demo {
             kind: ToastKind::Info,
             show_icon: true,
             pool: pool,
-            toasts: Toasts::new()
-            .anchor(Pos2::new(50.0, 50.0))
-            .direction(Direction::TopDown)
-            .align_to_end(false)
-            .custom_contents(MY_CUSTOM_TOAST, my_custom_toast_contents),
+            toasts: toasts,
             toast_options: None
         }
     }
