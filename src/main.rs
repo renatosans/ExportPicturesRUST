@@ -1,7 +1,7 @@
 use std::fs::File;
 use std::path::Path;
 use std::ffi::OsStr;
-use std::io::Read;
+use std::io::{Read, Write};
 use tinyfiledialogs::*;
 use base64::{Engine as _, engine::general_purpose};
 
@@ -177,7 +177,8 @@ impl Demo {
         let mut conn = self.pool.get().unwrap(); // TODO: fix unwrap
 
         let result: Result<Vec<Produto>, diesel::result::Error> = produto.load::<Produto>(&mut conn);
-        println!("The result is {:#?}", result);
+        let catalogo = result.unwrap();
+        catalogo.into_iter().for_each(|product: Produto| export_picture(product));
     }
 }
 
@@ -187,6 +188,25 @@ fn file_to_base64(file_path: String) -> String {
     file.read_to_end(&mut file_data).expect("Failed to read file data");
     let encoded: String = general_purpose::STANDARD_NO_PAD.encode(file_data);
     encoded
+}
+
+// TODO: fix InvalidPadding
+fn export_picture(product: Produto) {
+    let file_path: String = format!("C:/work/{}.jpg", product.nome);
+    println!("Exporting picture: {}", file_path);
+
+    let encoded  = product.foto.unwrap();
+    let file_data = general_purpose::STANDARD_NO_PAD.decode(encoded).unwrap();
+
+    let mut file = File::create(file_path).unwrap();
+    file.write_all(&file_data).unwrap_or_else(|e| {
+        println!("Error: {}", e);
+        std::process::exit(0); // don´t panic
+    });
+    file.flush().unwrap_or_else(|e| {
+        println!("Error: {}", e);
+        std::process::exit(0); // don´t panic
+    });
 }
 
 fn my_custom_toast_contents(ui: &mut egui::Ui, toast: &mut Toast) -> egui::Response {
