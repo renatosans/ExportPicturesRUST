@@ -36,14 +36,12 @@ fn main() {
 
 struct Demo {
     i: usize,
-    anchor: Pos2,
     duration_sec: f32,
-    direction: Direction,
-    align_to_end: bool,
     kind: ToastKind,
     show_icon: bool,
     pool: DbPool,
     toasts: Toasts,
+    toast_options: Option<ToastOptions>
 }
 
 impl Default for Demo {
@@ -61,35 +59,31 @@ impl Default for Demo {
         Self {
             i: 0,
             duration_sec: 2.0,
-            anchor: Pos2::new(10.0, 10.0),
-            direction: Direction::TopDown,
-            align_to_end: false,
             kind: ToastKind::Info,
             show_icon: true,
             pool: pool,
-            toasts: Toasts::new(),
+            toasts: Toasts::new()
+            .anchor(Pos2::new(50.0, 50.0))
+            .direction(Direction::TopDown)
+            .align_to_end(false)
+            .custom_contents(MY_CUSTOM_TOAST, my_custom_toast_contents),
+            toast_options: None
         }
     }
 }
 
 impl eframe::App for Demo {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        let mut toasts = Toasts::new()
-            .anchor(self.anchor)
-            .direction(self.direction)
-            .align_to_end(self.align_to_end)
-            .custom_contents(MY_CUSTOM_TOAST, my_custom_toast_contents);
+        self.options_window(ctx);
 
-        self.options_window(ctx, &mut toasts);
-
-        toasts.show(ctx);
+        self.toasts.show(ctx);
 
         ctx.request_repaint();
     }
 }
 
 impl Demo {
-    fn options_window(&mut self, ctx: &egui::Context, toasts: &mut Toasts) {
+    fn options_window(&mut self, ctx: &egui::Context) {
         egui::Window::new("")
             .default_pos((100.0, 100.0))
             .default_width(200.0)
@@ -115,8 +109,10 @@ impl Demo {
                     ..ToastOptions::with_duration(duration)
                 };
 
+                self.toast_options = Some(options.clone());
+
                 if ui.button("Give me a custom toast").clicked() {
-                    toasts.add(Toast {
+                    self.toasts.add(Toast {
                         text: format!("Hello, I am a custom toast {}", self.i).into(),
                         kind: ToastKind::Custom(MY_CUSTOM_TOAST),
                         options,
@@ -170,7 +166,12 @@ impl Demo {
             std::process::exit(0); // don´t panic
         });
 
-        // self.toasts.info("Registro inserido com sucesso no banco", options);
+        self.toasts.add(Toast {
+            text: "Registro inserido com sucesso no banco".into(),
+            kind: ToastKind::Custom(MY_CUSTOM_TOAST),
+            options: self.toast_options.unwrap(),
+        });
+
     }
 
     fn retrieve_products(&mut self) {
@@ -183,6 +184,12 @@ impl Demo {
 
         let catalogo = db_result.unwrap();
         catalogo.into_iter().for_each(|product: Produto| export_picture(product, output_dir.clone()));
+
+        self.toasts.add(Toast {
+            text: format!("Arquivos salvos em {}", output_dir.clone()).into(),
+            kind: ToastKind::Custom(MY_CUSTOM_TOAST),
+            options: self.toast_options.unwrap(),
+        });
     }
 }
 
