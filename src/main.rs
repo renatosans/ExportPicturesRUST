@@ -192,7 +192,9 @@ fn file_to_base64(file_path: String) -> String {
 
 // TODO: fix InvalidPadding
 fn export_picture(product: Produto) {
-    let file_path: String = format!("C:/work/{}.jpg", product.nome);
+    let output_dir = format!("{}{}", std::env::current_dir().unwrap().display(), "/img/");
+    std::fs::create_dir_all(output_dir.clone()).unwrap();
+    let file_path: String = format!("{}{}.jpg", output_dir, product.nome);
     println!("Exporting picture: {}", file_path);
 
     let encoded  = product.foto.unwrap();
