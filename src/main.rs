@@ -176,9 +176,13 @@ impl Demo {
     fn retrieve_products(&mut self) {
         let mut conn = self.pool.get().unwrap(); // TODO: fix unwrap
 
-        let result: Result<Vec<Produto>, diesel::result::Error> = produto.load::<Produto>(&mut conn);
-        let catalogo = result.unwrap();
-        catalogo.into_iter().for_each(|product: Produto| export_picture(product));
+        let db_result: Result<Vec<Produto>, diesel::result::Error> = produto.load::<Produto>(&mut conn);
+
+        let output_dir = format!("{}{}", std::env::current_dir().unwrap().display(), "/img");
+        std::fs::create_dir_all(output_dir.clone()).unwrap();
+
+        let catalogo = db_result.unwrap();
+        catalogo.into_iter().for_each(|product: Produto| export_picture(product, output_dir.clone()));
     }
 }
 
@@ -191,23 +195,26 @@ fn file_to_base64(file_path: String) -> String {
 }
 
 // TODO: fix InvalidPadding
-fn export_picture(product: Produto) {
-    let output_dir = format!("{}{}", std::env::current_dir().unwrap().display(), "/img/");
-    std::fs::create_dir_all(output_dir.clone()).unwrap();
-    let file_path: String = format!("{}{}.jpg", output_dir, product.nome);
+fn export_picture(product: Produto, output_dir: String) {
+    let extension: String = product.formato_imagem.unwrap().replace("image/", "").replace(";base64", "");
+    let file_path: String = format!("{}/{}.{}", output_dir, product.nome, extension);
     println!("Exporting picture: {}", file_path);
 
     let encoded  = product.foto.unwrap();
-    let file_data = general_purpose::STANDARD_NO_PAD.decode(encoded).unwrap();
+    let file_data = general_purpose::STANDARD_NO_PAD.decode(encoded).unwrap_or_else(|e| {
+        println!("Error: {}", e);
+        Vec::new()
+    });
+    if file_data.is_empty() { return }
 
     let mut file = File::create(file_path).unwrap();
     file.write_all(&file_data).unwrap_or_else(|e| {
         println!("Error: {}", e);
-        std::process::exit(0); // don´t panic
+        return
     });
     file.flush().unwrap_or_else(|e| {
         println!("Error: {}", e);
-        std::process::exit(0); // don´t panic
+        return
     });
 }
 
