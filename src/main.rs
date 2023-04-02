@@ -23,7 +23,8 @@ use std::time::Duration;
 
 /// Identifier for a custom toast kind
 const MY_CUSTOM_TOAST: u32 = 0;
-pub type DbPool = r2d2::Pool<ConnectionManager<MysqlConnection>>;
+pub type DbPool = r2d2::Pool<ConnectionManager<PgConnection>>;
+// pub type DbPool = r2d2::Pool<ConnectionManager<MysqlConnection>>;
 
 
 fn main() {
@@ -47,7 +48,8 @@ impl Default for Demo {
     fn default() -> Self {
         dotenv().ok();
         let database_url: String = std::env::var("DATABASE_URL").expect("DATABASE_URL");
-        let manager: ConnectionManager<MysqlConnection> = ConnectionManager::<MysqlConnection>::new(database_url);
+        let manager: ConnectionManager<PgConnection> = ConnectionManager::<PgConnection>::new(database_url);
+        // let manager: ConnectionManager<MysqlConnection> = ConnectionManager::<MysqlConnection>::new(database_url);
         let pool: DbPool = r2d2::Pool::builder()
         .build(manager)
         .unwrap_or_else(|e| {
