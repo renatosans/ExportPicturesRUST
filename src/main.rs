@@ -35,7 +35,6 @@ fn main() {
 }
 
 struct Demo {
-    i: usize,
     duration_sec: f32,
     kind: ToastKind,
     show_icon: bool,
@@ -62,7 +61,6 @@ impl Default for Demo {
         .custom_contents(MY_CUSTOM_TOAST, my_custom_toast_contents);
 
         Self {
-            i: 0,
             duration_sec: 2.0,
             kind: ToastKind::Info,
             show_icon: true,
@@ -114,12 +112,10 @@ impl Demo {
 
                 if ui.button("Give me a custom toast").clicked() {
                     self.toasts.add(Toast {
-                        text: format!("Hello, I am a custom toast {}", self.i).into(),
+                        text: format!("Hello, I am a custom toast. Kind: {:?}", self.kind).into(),
                         kind: ToastKind::Custom(MY_CUSTOM_TOAST),
                         options,
                     });
-
-                    self.i += 1;
                 }
 
                 ui.separator();
