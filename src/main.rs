@@ -61,7 +61,7 @@ impl Default for Demo {
         .custom_contents(MY_CUSTOM_TOAST, my_custom_toast_contents);
 
         Self {
-            duration_sec: 2.0,
+            duration_sec: 6.5,
             kind: ToastKind::Info,
             show_icon: true,
             pool: pool,
