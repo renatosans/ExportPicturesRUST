@@ -18,6 +18,7 @@ mod models;
 mod schema;
 use models::*;
 use schema::produto::dsl::produto;
+use schema::categoria::dsl::categoria;
 use schema::fornecedor::dsl::fornecedor;
 use std::time::Duration;
 
@@ -38,7 +39,7 @@ fn main() {
 
 struct Demo {
     duration_sec: f32,
-    kind: ToastKind,
+    category: String,
     show_icon: bool,
     pool: DbPool,
     toasts: Toasts,
@@ -65,7 +66,7 @@ impl Default for Demo {
 
         Self {
             duration_sec: 6.5,
-            kind: ToastKind::Info,
+            category: "-- Selecione --".to_string(),
             show_icon: true,
             pool: pool,
             toasts: toasts,
@@ -91,13 +92,17 @@ impl Demo {
             .default_width(200.0)
             .show(ctx, |ui| {
 
-                egui::ComboBox::from_label("Kind")
-                    .selected_text(format!("{:?}", self.kind))
+                let categories = self.retrieve_categories();
+
+                egui::ComboBox::from_label("Categoria")
+                    .selected_text(format!("{}", self.category))
                     .show_ui(ui, |ui| {
-                        ui.selectable_value(&mut self.kind, ToastKind::Info, "Info");
-                        ui.selectable_value(&mut self.kind, ToastKind::Warning, "Warning");
-                        ui.selectable_value(&mut self.kind, ToastKind::Error, "Error");
-                        ui.selectable_value(&mut self.kind, ToastKind::Success, "Success");
+                        if categories.is_empty() { 
+                            return;
+                        }
+                        categories.into_iter().for_each(|category: Categoria| {
+                            ui.selectable_value(&mut self.category, category.nome.clone(), category.nome.clone());
+                        });                        
                     });
 
                 let duration = if self.duration_sec < 0.01 {
@@ -112,14 +117,6 @@ impl Demo {
                 };
 
                 self.toast_options = Some(options.clone());
-
-                if ui.button("Give me a custom toast").clicked() {
-                    self.toasts.add(Toast {
-                        text: format!("Hello, I am a custom toast. Kind: {:?}", self.kind).into(),
-                        kind: ToastKind::Custom(MY_CUSTOM_TOAST),
-                        options,
-                    });
-                }
 
                 ui.separator();
 
@@ -207,7 +204,16 @@ impl Demo {
             options: self.toast_options.unwrap(),
         });
     }
-    
+
+    fn retrieve_categories(&mut self) -> Vec<Categoria> {
+        let mut conn = self.pool.get().unwrap(); // TODO: fix unwrap
+
+        let db_result: Result<Vec<Categoria>, diesel::result::Error> = categoria.load::<Categoria>(&mut conn);
+
+        let categories = db_result.unwrap();
+        categories
+    }
+
     fn retrieve_suppliers(&mut self) -> Vec<Fornecedor> {
         let mut conn = self.pool.get().unwrap(); // TODO: fix unwrap
 
