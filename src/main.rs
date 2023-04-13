@@ -18,6 +18,7 @@ mod models;
 mod schema;
 use models::*;
 use schema::produto::dsl::produto;
+use schema::fornecedor::dsl::fornecedor;
 use std::time::Duration;
 
 
@@ -122,6 +123,8 @@ impl Demo {
 
                 ui.separator();
 
+                ui.label("Produtos(Exportar fotos): ");
+
                 if ui.add_sized([80., 25.], egui::Button::new("Inserir")).clicked() {
                     self.insert_product()
                 }
@@ -130,6 +133,20 @@ impl Demo {
                     self.retrieve_products()
                 }
 
+                ui.separator();
+
+                ui.label("Fornecedores: ");
+
+                if ui.add_sized([80., 25.], egui::Button::new("Listar")).clicked() {
+                    let suppiers = self.retrieve_suppliers();
+                    if suppiers.is_empty() {
+                        println!("Nenhum fornecedor encontrado");
+                        return;
+                    }
+                    suppiers.into_iter().for_each(|supplier: Fornecedor| {
+                        println!("{:?}", supplier);
+                    });
+                }
             });
     }
 
@@ -189,6 +206,15 @@ impl Demo {
             kind: ToastKind::Custom(MY_CUSTOM_TOAST),
             options: self.toast_options.unwrap(),
         });
+    }
+    
+    fn retrieve_suppliers(&mut self) -> Vec<Fornecedor> {
+        let mut conn = self.pool.get().unwrap(); // TODO: fix unwrap
+
+        let db_result: Result<Vec<Fornecedor>, diesel::result::Error> = fornecedor.load::<Fornecedor>(&mut conn);
+
+        let suppliers = db_result.unwrap();
+        suppliers
     }
 }
 
