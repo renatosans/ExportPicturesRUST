@@ -92,6 +92,7 @@ impl Demo {
             .default_width(200.0)
             .show(ctx, |ui| {
 
+                ui.label("Produtos: ");
                 let categories = self.retrieve_categories();
 
                 egui::ComboBox::from_label("Categoria")
