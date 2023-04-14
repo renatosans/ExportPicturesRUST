@@ -11,6 +11,13 @@ use sqlx::mysql::*;                        // sqlx
 use diesel::prelude::*;                    // diesel ORM
 use diesel::r2d2::{self, ConnectionManager};
 
+// TODO:  substituir o 'ORM Diesel' pelo 'SQLx' para remover as seguintes dependencias
+//
+//  By default diesel depends on the following client libraries:
+//  - libpq for the PostgreSQL backend
+//  - libmysqlclient for the Mysql backend
+//  - libsqlite3 for the SQlite backend
+
 use eframe::egui;
 use egui::style::Margin;
 use egui_toast::{Toast, ToastKind, ToastOptions, Toasts};
