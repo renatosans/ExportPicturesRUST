@@ -6,7 +6,9 @@ use tinyfiledialogs::*;
 use base64::{Engine as _, engine::general_purpose};
 
 use dotenv::dotenv;
-use diesel::prelude::*;
+use tokio::runtime::Runtime;
+use sqlx::mysql::*;                        // sqlx
+use diesel::prelude::*;                    // diesel ORM
 use diesel::r2d2::{self, ConnectionManager};
 
 use eframe::egui;
@@ -136,12 +138,13 @@ impl Demo {
                 ui.label("Fornecedores: ");
 
                 if ui.add_sized([80., 25.], egui::Button::new("Listar")).clicked() {
-                    let suppiers = self.retrieve_suppliers();
-                    if suppiers.is_empty() {
+                    let rt = tokio::runtime::Runtime::new().unwrap();
+                    let suppliers = rt.block_on(self.retrieve_suppliers());
+                    if suppliers.is_empty() {
                         println!("Nenhum fornecedor encontrado");
                         return;
                     }
-                    suppiers.into_iter().for_each(|supplier: Fornecedor| {
+                    suppliers.into_iter().for_each(|supplier: Fornecedor| {
                         println!("{:?}", supplier);
                     });
                 }
@@ -215,14 +218,26 @@ impl Demo {
         categories
     }
 
-    fn retrieve_suppliers(&mut self) -> Vec<Fornecedor> {
-        let mut conn = self.pool.get().unwrap(); // TODO: fix unwrap
+    async fn retrieve_suppliers(&mut self) -> Vec<Fornecedor> {
+        let pool: MySqlPool = get_pool().await.into();
 
-        let db_result: Result<Vec<Fornecedor>, diesel::result::Error> = fornecedor.load::<Fornecedor>(&mut conn);
-
-        let suppliers = db_result.unwrap();
+        let suppliers: Vec<Fornecedor> = sqlx::query_as!(Fornecedor,"select * from fornecedor")
+            .fetch_all(&pool)
+            .await.expect("Unable to query database table");
         suppliers
     }
+}
+
+async fn get_pool() -> MySqlPool{
+    dotenv::dotenv().expect("Unable to load environment variables from .env file");
+
+    let db_url = std::env::var("DATABASE_URL").expect("Unable to read DATABASE_URL env var");
+
+    let pool = MySqlPoolOptions::new()
+        .max_connections(100)
+        .connect(&db_url)
+        .await.expect("Unable to connect to database");
+    pool
 }
 
 fn file_to_base64(file_path: String) -> String {
