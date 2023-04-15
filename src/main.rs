@@ -17,6 +17,8 @@ use diesel::r2d2::{self, ConnectionManager};
 //  - libmysqlclient for the Mysql backend
 //  - libsqlite3 for the SQlite backend
 
+// Observação:  o sqlx(tokio) está travando a interface de usuário, com o Diesel isso não acontece
+
 use eframe::egui;
 use egui::style::Margin;
 use egui_toast::{Toast, ToastKind, ToastOptions, Toasts};
@@ -26,7 +28,6 @@ mod models;
 mod schema;
 use models::*;
 use schema::produto::dsl::produto;
-use schema::categoria::dsl::categoria;
 use std::time::Duration;
 
 
@@ -100,7 +101,8 @@ impl Demo {
             .show(ctx, |ui| {
 
                 ui.label("Produtos: ");
-                let categories = self.retrieve_categories();
+                let rt = tokio::runtime::Runtime::new().unwrap();
+                let categories = rt.block_on(self.retrieve_categories());
 
                 egui::ComboBox::from_label("Categoria")
                     .selected_text(format!("{}", self.category))
@@ -110,7 +112,7 @@ impl Demo {
                         }
                         categories.into_iter().for_each(|category: Categoria| {
                             ui.selectable_value(&mut self.category, category.nome.clone(), category.nome.clone());
-                        });                        
+                        });
                     });
 
                 let duration = if self.duration_sec < 0.01 {
@@ -143,7 +145,6 @@ impl Demo {
                 ui.label("Fornecedores: ");
 
                 if ui.add_sized([80., 25.], egui::Button::new("Listar")).clicked() {
-                    let rt = tokio::runtime::Runtime::new().unwrap();
                     let suppliers = rt.block_on(self.retrieve_suppliers());
                     if suppliers.is_empty() {
                         println!("Nenhum fornecedor encontrado");
@@ -214,12 +215,12 @@ impl Demo {
         });
     }
 
-    fn retrieve_categories(&mut self) -> Vec<Categoria> {
-        let mut conn = self.pool.get().unwrap(); // TODO: fix unwrap
+    async fn retrieve_categories(&mut self) -> Vec<Categoria> {
+        let pool: PgPool = get_pool().await.into();
 
-        let db_result: Result<Vec<Categoria>, diesel::result::Error> = categoria.load::<Categoria>(&mut conn);
-
-        let categories = db_result.unwrap();
+        let categories: Vec<Categoria> = sqlx::query_as!(Categoria, "select * from categoria")
+            .fetch_all(&pool)
+            .await.expect("Unable to query database table");
         categories
     }
 
