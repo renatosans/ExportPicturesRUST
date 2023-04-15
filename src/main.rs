@@ -6,9 +6,8 @@ use tinyfiledialogs::*;
 use base64::{Engine as _, engine::general_purpose};
 
 use dotenv::dotenv;
+// use diesel::prelude::*;                       // diesel ORM
 use sqlx::postgres::{PgPool, PgPoolOptions};     // sqlx
-use diesel::prelude::*;                          // diesel ORM
-use diesel::r2d2::{self, ConnectionManager};
 
 // TODO:  substituir o 'ORM Diesel' pelo 'SQLx' para remover as seguintes dependencias
 //
@@ -30,9 +29,8 @@ use std::time::Duration;
 
 /// Identifier for a custom toast kind
 const MY_CUSTOM_TOAST: u32 = 0;
-pub type DbPool = r2d2::Pool<ConnectionManager<PgConnection>>;
+// pub type DbPool = r2d2::Pool<ConnectionManager<PgConnection>>;
 // pub type DbPool = r2d2::Pool<ConnectionManager<MysqlConnection>>;
-
 
 fn main() {
     eframe::run_native(
@@ -136,7 +134,7 @@ impl Demo {
                         }
                         None => return,
                     }
-                    let inserted_product: Produto = rt.block_on(self.insert_product(file_path));
+                    rt.block_on(self.insert_product(file_path));
 
                     self.toasts.add(Toast {
                         text: "Registro inserido com sucesso no banco".into(),

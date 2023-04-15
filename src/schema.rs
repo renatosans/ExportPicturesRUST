@@ -1,5 +1,6 @@
 // @generated automatically by Diesel CLI.
 
+/*
 diesel::table! {
     categoria (id) {
         id -> Integer,
@@ -44,3 +45,4 @@ diesel::allow_tables_to_appear_in_same_query!(
     produto,
     unidademedida,
 );
+*/
