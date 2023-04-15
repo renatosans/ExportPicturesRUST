@@ -18,6 +18,7 @@ use diesel::r2d2::{self, ConnectionManager};
 //  - libsqlite3 for the SQlite backend
 
 // Observação:  o sqlx(tokio) está travando a interface de usuário, com o Diesel isso não acontece
+//              possivel causa o block_on do tokio
 
 use eframe::egui;
 use egui::style::Margin;
