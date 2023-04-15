@@ -129,7 +129,20 @@ impl Demo {
                 ui.label("Produtos(Exportar fotos): ");
 
                 if ui.add_sized([80., 25.], egui::Button::new("Inserir")).clicked() {
-                    self.insert_product()
+                    let file_path: String;
+                    match open_file_dialog("Selecione a foto do produto", "*.*", None) {
+                        Some(file) => {
+                            file_path = file;
+                        }
+                        None => return,
+                    }
+                    let inserted_product: Produto = rt.block_on(self.insert_product(file_path));
+
+                    self.toasts.add(Toast {
+                        text: "Registro inserido com sucesso no banco".into(),
+                        kind: ToastKind::Custom(MY_CUSTOM_TOAST),
+                        options: self.toast_options.unwrap(),
+                    });            
                 }
 
                 if ui.add_sized([80., 25.], egui::Button::new("Recuperar")).clicked() {
@@ -169,45 +182,31 @@ impl Demo {
             });
     }
 
-    fn insert_product(&mut self) {
-        /*
-        let mut conn = self.pool.get().unwrap(); // TODO: fix unwrap
-
-        let file_path: String;
-        match open_file_dialog("Selecione a foto do produto", "*.*", None) {
-            Some(file) => {
-                file_path = file;
-            }
-            None => return,
-        }
-        let foto: String = file_to_base64(file_path.clone());
+    async fn insert_product(&mut self, file_path: String) -> Produto {
         let path = Path::new(&file_path);
         let filename = path.file_stem().and_then(OsStr::to_str).unwrap();
         let extension = path.extension().and_then(OsStr::to_str).unwrap();
 
-        let new_product = Produto {
-            id: 0,
-            nome: filename.to_string(),
-            preco: 99.00,
-            categoria: None,
-            fornecedor: None,
-            descricao: Some("Descrição do produto".to_string()),
-            foto: Some(foto),
-            formato_imagem: Some(format!("image/{};base64", extension)),
-            data_criacao: Some(chrono::Local::now().naive_local()),
-        };
+        let prod_category: Option<i32> = None;
+        let prod_supplier: Option<i32> = None;
 
-        diesel::insert_into(produto).values(new_product).execute(&mut conn).unwrap_or_else(|e| {
-            println!("Error: {}", e);
-            std::process::exit(0); // don´t panic
-        });
-
-        self.toasts.add(Toast {
-            text: "Registro inserido com sucesso no banco".into(),
-            kind: ToastKind::Custom(MY_CUSTOM_TOAST),
-            options: self.toast_options.unwrap(),
-        });
-        */
+        let inserted: Produto = sqlx::query_as!(Produto, 
+            "INSERT INTO produto( nome, preco, categoria, fornecedor, descricao, foto, \"formatoImagem\", \"dataCriacao\" )
+               VALUES ( $1, $2, $3, $4, $5, $6, $7, $8 )
+               RETURNING id, nome, preco, categoria, fornecedor, descricao, foto, \"formatoImagem\" as formato_imagem, \"dataCriacao\" as data_criacao;",
+               filename.to_string(),
+               99.00,
+               prod_category,
+               prod_supplier,
+               Some("Descrição do produto".to_string()),
+               Some(file_to_base64(file_path.clone())),
+               Some(format!("image/{};base64", extension)),
+               Some(chrono::Local::now().naive_local())
+            )
+            .fetch_one(&self.pool)
+            .await.expect("Unable to query database table");
+            inserted
+    
     }
 
     async fn retrieve_products(&mut self) -> Vec<Produto> {
