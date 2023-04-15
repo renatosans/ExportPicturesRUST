@@ -25,7 +25,6 @@ use egui::{Color32, Direction, Frame, Pos2, RichText, Widget};
 mod models;
 mod schema;
 use models::*;
-use schema::produto::dsl::produto;
 use std::time::Duration;
 
 
@@ -134,7 +133,21 @@ impl Demo {
                 }
 
                 if ui.add_sized([80., 25.], egui::Button::new("Recuperar")).clicked() {
-                    self.retrieve_products()
+                    let output_dir = format!("{}{}", std::env::current_dir().unwrap().display(), "/img");
+                    std::fs::create_dir_all(output_dir.clone()).unwrap();
+
+                    let catalogo: Vec<Produto> = rt.block_on(self.retrieve_products());
+                    if catalogo.is_empty() {
+                        println!("Nenhum produto encontrado");
+                        return;
+                    }
+                    catalogo.into_iter().for_each(|product: Produto| export_picture(product, output_dir.clone()));
+
+                    self.toasts.add(Toast {
+                        text: format!("Arquivos salvos em {}", output_dir.clone()).into(),
+                        kind: ToastKind::Custom(MY_CUSTOM_TOAST),
+                        options: self.toast_options.unwrap(),
+                    });            
                 }
 
                 ui.separator();
@@ -195,24 +208,21 @@ impl Demo {
         */
     }
 
-    fn retrieve_products(&mut self) {
-        /*
-        let mut conn = self.pool.get().unwrap(); // TODO: fix unwrap
-
-        let db_result: Result<Vec<Produto>, diesel::result::Error> = produto.load::<Produto>(&mut conn);
-
-        let output_dir = format!("{}{}", std::env::current_dir().unwrap().display(), "/img");
-        std::fs::create_dir_all(output_dir.clone()).unwrap();
-
-        let catalogo = db_result.unwrap();
-        catalogo.into_iter().for_each(|product: Produto| export_picture(product, output_dir.clone()));
-
-        self.toasts.add(Toast {
-            text: format!("Arquivos salvos em {}", output_dir.clone()).into(),
-            kind: ToastKind::Custom(MY_CUSTOM_TOAST),
-            options: self.toast_options.unwrap(),
-        });
-        */
+    async fn retrieve_products(&mut self) -> Vec<Produto> {
+        let products: Vec<Produto> = sqlx::query_as!(Produto, 
+        "SELECT id,
+                nome,
+                preco,
+                categoria,
+                fornecedor,
+                descricao,
+                foto,
+                \"formatoImagem\" as formato_imagem,
+                \"dataCriacao\" as data_criacao
+        FROM produto;")
+            .fetch_all(&self.pool)
+            .await.expect("Unable to query database table");
+        products
     }
 
     async fn retrieve_categories(&mut self) -> Vec<Categoria> {
