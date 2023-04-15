@@ -141,7 +141,9 @@ impl Demo {
                         println!("Nenhum produto encontrado");
                         return;
                     }
-                    catalogo.into_iter().for_each(|product: Produto| export_picture(product, output_dir.clone()));
+                    catalogo.into_iter().for_each(|product: Produto| {
+                        export_picture(product, output_dir.clone())
+                    });
 
                     self.toasts.add(Toast {
                         text: format!("Arquivos salvos em {}", output_dir.clone()).into(),
