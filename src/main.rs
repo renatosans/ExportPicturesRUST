@@ -6,8 +6,8 @@ use tinyfiledialogs::*;
 use base64::{Engine as _, engine::general_purpose};
 
 use dotenv::dotenv;
-use sqlx::mysql::*;                        // sqlx
-use diesel::prelude::*;                    // diesel ORM
+use sqlx::postgres::{PgPool, PgPoolOptions};     // sqlx
+use diesel::prelude::*;                          // diesel ORM
 use diesel::r2d2::{self, ConnectionManager};
 
 // TODO:  substituir o 'ORM Diesel' pelo 'SQLx' para remover as seguintes dependencias
@@ -32,8 +32,8 @@ use std::time::Duration;
 
 /// Identifier for a custom toast kind
 const MY_CUSTOM_TOAST: u32 = 0;
-// pub type DbPool = r2d2::Pool<ConnectionManager<PgConnection>>;
-pub type DbPool = r2d2::Pool<ConnectionManager<MysqlConnection>>;
+pub type DbPool = r2d2::Pool<ConnectionManager<PgConnection>>;
+// pub type DbPool = r2d2::Pool<ConnectionManager<MysqlConnection>>;
 
 
 fn main() {
@@ -57,8 +57,8 @@ impl Default for Demo {
     fn default() -> Self {
         dotenv().ok();
         let database_url: String = std::env::var("DATABASE_URL").expect("DATABASE_URL");
-        // let manager: ConnectionManager<PgConnection> = ConnectionManager::<PgConnection>::new(database_url);
-        let manager: ConnectionManager<MysqlConnection> = ConnectionManager::<MysqlConnection>::new(database_url);
+        let manager: ConnectionManager<PgConnection> = ConnectionManager::<PgConnection>::new(database_url);
+        // let manager: ConnectionManager<MysqlConnection> = ConnectionManager::<MysqlConnection>::new(database_url);
         let pool: DbPool = r2d2::Pool::builder()
         .build(manager)
         .unwrap_or_else(|e| {
@@ -224,7 +224,7 @@ impl Demo {
     }
 
     async fn retrieve_suppliers(&mut self) -> Vec<Fornecedor> {
-        let pool: MySqlPool = get_pool().await.into();
+        let pool: PgPool = get_pool().await.into();
 
         let suppliers: Vec<Fornecedor> = sqlx::query_as!(Fornecedor,"select * from fornecedor")
             .fetch_all(&pool)
@@ -233,12 +233,12 @@ impl Demo {
     }
 }
 
-async fn get_pool() -> MySqlPool{
+async fn get_pool() -> PgPool {
     dotenv::dotenv().expect("Unable to load environment variables from .env file");
 
     let db_url = std::env::var("DATABASE_URL").expect("Unable to read DATABASE_URL env var");
 
-    let pool = MySqlPoolOptions::new()
+    let pool = PgPoolOptions::new()
         .max_connections(100)
         .connect(&db_url)
         .await.expect("Unable to connect to database");
