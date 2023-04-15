@@ -6,7 +6,6 @@ use tinyfiledialogs::*;
 use base64::{Engine as _, engine::general_purpose};
 
 use dotenv::dotenv;
-use tokio::runtime::Runtime;
 use sqlx::mysql::*;                        // sqlx
 use diesel::prelude::*;                    // diesel ORM
 use diesel::r2d2::{self, ConnectionManager};
@@ -28,7 +27,6 @@ mod schema;
 use models::*;
 use schema::produto::dsl::produto;
 use schema::categoria::dsl::categoria;
-use schema::fornecedor::dsl::fornecedor;
 use std::time::Duration;
 
 
