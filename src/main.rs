@@ -17,9 +17,6 @@ use diesel::r2d2::{self, ConnectionManager};
 //  - libmysqlclient for the Mysql backend
 //  - libsqlite3 for the SQlite backend
 
-// Observação:  o sqlx(tokio) está travando a interface de usuário, com o Diesel isso não acontece
-//              possivel causa o block_on do tokio
-
 use eframe::egui;
 use egui::style::Margin;
 use egui_toast::{Toast, ToastKind, ToastOptions, Toasts};
@@ -50,23 +47,22 @@ struct Demo {
     duration_sec: f32,
     category: String,
     show_icon: bool,
-    pool: DbPool,
+    pool: PgPool,
     toasts: Toasts,
     toast_options: Option<ToastOptions>
 }
 
 impl Default for Demo {
     fn default() -> Self {
-        dotenv().ok();
-        let database_url: String = std::env::var("DATABASE_URL").expect("DATABASE_URL");
-        let manager: ConnectionManager<PgConnection> = ConnectionManager::<PgConnection>::new(database_url);
-        // let manager: ConnectionManager<MysqlConnection> = ConnectionManager::<MysqlConnection>::new(database_url);
-        let pool: DbPool = r2d2::Pool::builder()
-        .build(manager)
-        .unwrap_or_else(|e| {
-            println!("Error: {}", e);
-            std::process::exit(0); // don´t panic
-        });
+        dotenv().expect("Unable to load environment variables from .env file");
+        let database_url = std::env::var("DATABASE_URL").expect("Unable to read DATABASE_URL env var");
+
+        let rt = tokio::runtime::Runtime::new().unwrap();
+        let pool_options = PgPoolOptions::new()
+            .max_connections(100);
+        let pool = rt.block_on(pool_options.connect(&database_url))
+            .expect("Unable to connect to database");
+
         let toasts: Toasts = Toasts::new()
         .anchor(Pos2::new(50.0, 50.0))
         .direction(Direction::TopDown)
@@ -159,6 +155,7 @@ impl Demo {
     }
 
     fn insert_product(&mut self) {
+        /*
         let mut conn = self.pool.get().unwrap(); // TODO: fix unwrap
 
         let file_path: String;
@@ -195,10 +192,11 @@ impl Demo {
             kind: ToastKind::Custom(MY_CUSTOM_TOAST),
             options: self.toast_options.unwrap(),
         });
-
+        */
     }
 
     fn retrieve_products(&mut self) {
+        /*
         let mut conn = self.pool.get().unwrap(); // TODO: fix unwrap
 
         let db_result: Result<Vec<Produto>, diesel::result::Error> = produto.load::<Produto>(&mut conn);
@@ -214,37 +212,22 @@ impl Demo {
             kind: ToastKind::Custom(MY_CUSTOM_TOAST),
             options: self.toast_options.unwrap(),
         });
+        */
     }
 
     async fn retrieve_categories(&mut self) -> Vec<Categoria> {
-        let pool: PgPool = get_pool().await.into();
-
         let categories: Vec<Categoria> = sqlx::query_as!(Categoria, "select * from categoria")
-            .fetch_all(&pool)
+            .fetch_all(&self.pool)
             .await.expect("Unable to query database table");
         categories
     }
 
     async fn retrieve_suppliers(&mut self) -> Vec<Fornecedor> {
-        let pool: PgPool = get_pool().await.into();
-
         let suppliers: Vec<Fornecedor> = sqlx::query_as!(Fornecedor,"select * from fornecedor")
-            .fetch_all(&pool)
+            .fetch_all(&self.pool)
             .await.expect("Unable to query database table");
         suppliers
     }
-}
-
-async fn get_pool() -> PgPool {
-    dotenv::dotenv().expect("Unable to load environment variables from .env file");
-
-    let db_url = std::env::var("DATABASE_URL").expect("Unable to read DATABASE_URL env var");
-
-    let pool = PgPoolOptions::new()
-        .max_connections(100)
-        .connect(&db_url)
-        .await.expect("Unable to connect to database");
-    pool
 }
 
 fn file_to_base64(file_path: String) -> String {
