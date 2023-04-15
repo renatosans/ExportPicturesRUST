@@ -62,3 +62,20 @@ CREATE TABLE public."unidadeMedida" (
 	sigla varchar(10) NULL,
 	CONSTRAINT "unidadeMedida_pkey" PRIMARY KEY (id)
 );
+
+
+-- -----------------------------------------------------
+-- Data for table `commercedb`.`fornecedor`
+-- -----------------------------------------------------
+INSERT INTO fornecedor(id, cnpj, nome, email) VALUES (1, '06.347.409/0069-53', 'Lojas Centauro', 'sac@centauro.com.br');
+INSERT INTO fornecedor(id, cnpj, nome, email) VALUES (2, '05.570.714/0001-59', 'Kabum Comércio Eletrônico', 'faleconosco@kabum.com.br');
+INSERT INTO fornecedor(id, cnpj, nome, email) VALUES (3, '09.339.936/0001-16', 'Netshoes Comércio Eletrônico', 'sac@netshoes.com.br');
+
+-- -----------------------------------------------------
+-- Data for table `commercedb`.`categoria`
+-- -----------------------------------------------------
+INSERT INTO categoria(id, nome) VALUES (1, 'Móveis');
+INSERT INTO categoria(id, nome) VALUES (2, 'Eletrônicos');
+INSERT INTO categoria(id, nome) VALUES (3, 'Relógios');
+INSERT INTO categoria(id, nome) VALUES (4, 'Celulares');
+INSERT INTO categoria(id, nome) VALUES (5, 'Artigos Esportivos');
