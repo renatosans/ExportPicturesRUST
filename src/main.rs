@@ -128,7 +128,8 @@ impl Demo {
 
                 if ui.add_sized([80., 25.], egui::Button::new("Inserir")).clicked() {
                     let file_path: String;
-                    match open_file_dialog("Selecione a foto do produto", "*.*", None) {
+                    let filter: Option<(&[&str], &str)> = Some((&["*.jpg", "*.gif", "*.png"], "Image Files"));
+                    match open_file_dialog("Selecione a foto do produto", "*.*", filter) {
                         Some(file) => {
                             file_path = file;
                         }
