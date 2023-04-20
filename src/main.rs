@@ -244,18 +244,18 @@ fn file_to_base64(file_path: String) -> String {
     let mut file = File::open(file_path).expect("Failed to open file");
     let mut file_data: Vec<u8> = Vec::new();
     file.read_to_end(&mut file_data).expect("Failed to read file data");
-    let encoded: String = general_purpose::STANDARD_NO_PAD.encode(file_data);
+    let encoded: String = general_purpose::STANDARD.encode(file_data);
     encoded
 }
 
-// TODO: fix InvalidPadding
+// TODO: fix InvalidPadding           STANDARD_NO_PAD -> STANDARD
 fn export_picture(product: Produto, output_dir: String) {
     let extension: String = product.formato_imagem.unwrap().replace("image/", "").replace(";base64", "");
     let file_path: String = format!("{}/{}.{}", output_dir, product.nome, extension);
     println!("Exporting picture: {}", file_path);
 
     let encoded  = product.foto.unwrap();
-    let file_data = general_purpose::STANDARD_NO_PAD.decode(encoded).unwrap_or_else(|e| {
+    let file_data = general_purpose::STANDARD.decode(encoded).unwrap_or_else(|e| {
         println!("Error: {}", e);
         Vec::new()
     });
