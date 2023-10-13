@@ -267,6 +267,7 @@ fn export_picture(product: Produto, output_dir: String) {
         return
     });
     file.flush().unwrap_or_else(|e| {
+
         println!("Error: {}", e);
         return
     });
